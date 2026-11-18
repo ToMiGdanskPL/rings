@@ -1,1 +1,1627 @@
-test
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Leśne Pierścienie — Układanka</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Quicksand:wght@500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #162415;
+            --panel-bg: rgba(24, 38, 22, 0.78);
+            --panel-border: rgba(164, 198, 128, 0.35);
+            --accent-gold: #e6c27a;
+            --accent-leaf: #8bc34a;
+            --text-light: #f4f7f0;
+            --text-muted: #b8c9a9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Quicksand', sans-serif;
+            color: var(--text-light);
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        /* Top HUD */
+        .hud-top {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 680px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .hud-pill {
+            pointer-events: auto;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .game-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .level-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(230, 194, 122, 0.4);
+            color: var(--text-light);
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 5px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .level-btn:hover {
+            background: rgba(230, 194, 122, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .moves-badge {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .moves-badge span {
+            color: var(--text-light);
+            font-weight: 700;
+        }
+
+        /* Tutorial / Status Hint Banner */
+        .hint-banner {
+            position: relative;
+            z-index: 10;
+            background: rgba(20, 32, 18, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(164, 198, 128, 0.28);
+            border-radius: 16px;
+            padding: 8px 18px;
+            font-size: 0.88rem;
+            color: #e4eed8;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        /* Bottom Controls */
+        .hud-bottom {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 540px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .ctrl-btn {
+            pointer-events: auto;
+            background: linear-gradient(180deg, rgba(44, 66, 39, 0.9) 0%, rgba(25, 40, 22, 0.92) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            color: var(--text-light);
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 0.92rem;
+            padding: 11px 18px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
+        }
+
+        .ctrl-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .ctrl-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        .ctrl-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--accent-gold);
+        }
+
+        /* Modals (Victory & Level Select) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(10, 18, 9, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: linear-gradient(165deg, #243820 0%, #152213 100%);
+            border: 1px solid rgba(230, 194, 122, 0.45);
+            border-radius: 26px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255,255,255,0.12);
+            transform: scale(0.92) translateY(10px);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 22px;
+            line-height: 1.45;
+        }
+
+        .primary-btn {
+            background: linear-gradient(180deg, #d8b263 0%, #a98238 100%);
+            color: #182214;
+            border: none;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 1.02rem;
+            padding: 13px 28px;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(216, 178, 99, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+            transition: transform 0.15s ease, filter 0.15s ease;
+            width: 100%;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.08);
+            transform: translateY(-2px);
+        }
+
+        .primary-btn:active {
+            transform: translateY(1px);
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .level-tile {
+            aspect-ratio: 1;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(164, 198, 128, 0.25);
+            color: var(--text-light);
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .level-tile:hover {
+            background: rgba(230, 194, 122, 0.2);
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        .level-tile.completed {
+            background: rgba(139, 195, 74, 0.18);
+            border-color: rgba(139, 195, 74, 0.6);
+            color: #c5e898;
+        }
+
+        .level-tile.current {
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 0 14px rgba(230, 194, 122, 0.3);
+        }
+
+        .level-tile small {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.65rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 0.92rem;
+            }
+            .hud-pill {
+                padding: 6px 12px;
+            }
+            .ctrl-btn {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Top HUD -->
+        <div class="hud-top">
+            <div class="hud-pill">
+                <span class="game-title">Leśne Pierścienie</span>
+            </div>
+
+            <div class="hud-pill">
+                <button id="openLevelsBtn" class="level-btn" title="Wybierz poziom">
+                    <span id="levelIndicator">Poziom 1 / 8</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="moves-badge">Ruchy: <span id="moveCounter">0</span></div>
+            </div>
+        </div>
+
+        <!-- Contextual Hint Banner -->
+        <div id="hintBanner" class="hint-banner">
+            Kliknij drewniany pierścień, aby go obrócić. Ustaw luki tak, aby pierścienie mogły się rozłączyć!
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="hud-bottom">
+            <button id="resetBtn" class="ctrl-btn" title="Zacznij poziom od nowa">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+                <span>Resetuj</span>
+            </button>
+
+            <button id="hintBtn" class="ctrl-btn" title="Pokaż następny ruch">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                    <path d="M9 18h6"/>
+                    <path d="M10 22h4"/>
+                </svg>
+                <span>Podpowiedź</span>
+            </button>
+
+            <button id="soundBtn" class="ctrl-btn" title="Włącz / wyłącz dźwięk">
+                <svg id="soundIconOn" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+                <svg id="soundIconOff" style="display:none;" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <line x1="23" y1="9" x2="17" y2="15"/>
+                    <line x1="17" y1="9" x2="23" y2="15"/>
+                </svg>
+                <span id="soundLabel">Dźwięk</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title" id="victoryTitle">Poziom Ukończony!</h2>
+            <p class="modal-subtitle" id="victoryText">Wszystkie pierścienie zostały uwolnione w 4 ruchach.</p>
+            <button id="nextLevelBtn" class="primary-btn">Następny poziom</button>
+        </div>
+    </div>
+
+    <!-- Level Select Modal -->
+    <div id="levelsModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title">Wybierz Poziom</h2>
+            <p class="modal-subtitle">Rozplącz splecione drewniane obręcze w sercu lasu.</p>
+            <div class="levels-grid" id="levelsGrid"></div>
+            <button id="closeLevelsBtn" class="ctrl-btn" style="width: 100%; justify-content: center;">Zamknij</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * LEŚNE PIERŚCIENIE (Forest Rings)
+         * Mechanika:
+         * - Pierścienie (C-ringi) leżą na siatce (przesuniętej kolumnowo jak na zdjęciu lub ortogonalnej).
+         * - Sąsiednie pierścienie są ze sobą splecione.
+         * - Dwa sąsiednie pierścienie A i B są ZABLOKOWANE względem siebie, dopóki:
+         *   luka pierścienia A nie jest skierowana w stronę B LUB luka pierścienia B nie jest skierowana w stronę A.
+         * - Gdy pierścień nie jest zablokowany przez ŻADNEGO z pozostałych na planszy sąsiadów,
+         *   automatycznie wysuwa się i odlatuje w głąb lasu!
+         * - Pierścienie z drewnianym kołkiem na górze (locked: true) nie mogą się obracać —
+         *   aby je uwolnić, trzeba obrócić ich sąsiadów luką w ich stronę!
+         */
+
+        // ==========================================
+        // 1. SYNTHESIZED WOOD & NATURE AUDIO (Web Audio API)
+        // ==========================================
+        class SoundFX {
+            constructor() {
+                this.enabled = true;
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playWoodClick(pitchMultiplier = 1) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                // Resonant hollow wood knock
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(240 * pitchMultiplier, now);
+                osc.frequency.exponentialRampToValueAtTime(95 * pitchMultiplier, now + 0.085);
+
+                gain.gain.setValueAtTime(0.32, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.095);
+
+                // Subtle high wood transient
+                const osc2 = this.ctx.createOscillator();
+                const gain2 = this.ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(620 * pitchMultiplier, now);
+                osc2.frequency.exponentialRampToValueAtTime(180 * pitchMultiplier, now + 0.04);
+                gain2.gain.setValueAtTime(0.16, now);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+                osc2.connect(gain2);
+                gain2.connect(this.ctx.destination);
+                osc2.start(now);
+                osc2.stop(now + 0.05);
+            }
+
+            playLockedKnock() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(135, now);
+                osc.frequency.exponentialRampToValueAtTime(75, now + 0.07);
+
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+
+            playRelease(comboIndex = 0) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const baseFreqs = [392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
+                const freq = baseFreqs[comboIndex % baseFreqs.length];
+
+                // Wood marimba + gentle forest chime
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.015, now + 0.35);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.24, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            }
+
+            playVictory() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [392.00, 493.88, 587.33, 783.99];
+                notes.forEach((freq, idx) => {
+                    const start = this.ctx.currentTime + idx * 0.11;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, start);
+
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.linearRampToValueAtTime(0.2, start + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.65);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + 0.7);
+                });
+            }
+        }
+
+        const sfx = new SoundFX();
+
+        // ==========================================
+        // 2. LEVEL DEFINITIONS (Staggered Lattice like the photo!)
+        // ==========================================
+        // Coordinate system:
+        // col: integer (0, 1, 2...)
+        // row: integer (0, 1, 2...)
+        // Odd columns (col % 2 === 1) are shifted UP by 0.5 row height, creating the exact
+        // diagonal interlocking weave seen in the uploaded image!
+        //
+        // Directions (0..5) for hexagonal neighbors on staggered columns:
+        // Actually, let's check the neighbors in a staggered column grid:
+        // Each ring at (col, row) has up to 6 neighbors:
+        // - Up (0): (col, row - 1) -> angle -90° (-PI/2)
+        // - Up-Right (1): (col + 1, col%2===0 ? row : row - 1) -> angle -30° (-PI/6)
+        // - Down-Right (2): (col + 1, col%2===0 ? row + 1 : row) -> angle +30° (+PI/6)
+        // - Down (3): (col, row + 1) -> angle +90° (+PI/2)
+        // - Down-Left (4): (col - 1, col%2===0 ? row + 1 : row) -> angle +150° (5*PI/6)
+        // - Up-Left (5): (col - 1, col%2===0 ? row : row - 1) -> angle -150° (-5*PI/6)
+        //
+        // Notice how clean and natural 60-degree rotations (6 positions: 0, 1, 2, 3, 4, 5) are!
+        // Each click rotates the ring by 60° clockwise (dir = (dir + 1) % 6), pointing the opening
+        // directly at one of the 6 neighboring lattice positions!
+
+        const DIR_ANGLES = [
+            -Math.PI / 2,        // 0: Up (Góra)
+            -Math.PI / 6,        // 1: Up-Right (Prawy-górny)
+             Math.PI / 6,        // 2: Down-Right (Prawy-dolny)
+             Math.PI / 2,        // 3: Down (Dół)
+             5 * Math.PI / 6,    // 4: Down-Left (Lewy-dolny)
+            -5 * Math.PI / 6     // 5: Up-Left (Lewy-górny)
+        ];
+
+        function getNeighborCoords(col, row, dir) {
+            const isOdd = Math.abs(col % 2) === 1;
+            switch (dir) {
+                case 0: return { col: col,     row: row - 1 }; // Up
+                case 1: return { col: col + 1, row: isOdd ? row - 1 : row }; // Up-Right
+                case 2: return { col: col + 1, row: isOdd ? row : row + 1 }; // Down-Right
+                case 3: return { col: col,     row: row + 1 }; // Down
+                case 4: return { col: col - 1, row: isOdd ? row : row + 1 }; // Down-Left
+                case 5: return { col: col - 1, row: isOdd ? row - 1 : row }; // Up-Left
+            }
+            return null;
+        }
+
+        // Handcrafted levels (each verified solvable by our built-in BFS solver!)
+        const LEVELS = [
+            {
+                name: "Pierwszy Splot",
+                hint: "Kliknij pierścień, aby obrócić jego lukę w stronę sąsiada i go uwolnić.",
+                rings: [
+                    { col: 0, row: 1, dir: 3, locked: false },
+                    { col: 1, row: 1, dir: 2, locked: false },
+                    { col: 2, row: 1, dir: 3, locked: false }
+                ]
+            },
+            {
+                name: "Leśny Krąg",
+                hint: "Uwolnij najpierw skrajny pierścień, aby otworzyć drogę dla pozostałych.",
+                rings: [
+                    { col: 0, row: 1, dir: 4, locked: false },
+                    { col: 1, row: 0, dir: 0, locked: false },
+                    { col: 1, row: 1, dir: 3, locked: false },
+                    { col: 2, row: 1, dir: 2, locked: false }
+                ]
+            },
+            {
+                name: "Kołki Kotwiczące",
+                hint: "Pierścienie z kołkiem na górze są nieruchome — obróć luki sąsiadów w ich stronę!",
+                rings: [
+                    { col: 0, row: 0, dir: 5, locked: true },
+                    { col: 1, row: 0, dir: 0, locked: false },
+                    { col: 2, row: 0, dir: 1, locked: true },
+                    { col: 1, row: 1, dir: 3, locked: false }
+                ]
+            },
+            {
+                name: "Pajęczyna Mchu",
+                hint: "Planuj kolejność — jeden uwolniony pierścień zwalnia kolejne.",
+                rings: [
+                    { col: 0, row: 0, dir: 4, locked: false },
+                    { col: 0, row: 1, dir: 3, locked: false },
+                    { col: 1, row: 0, dir: 0, locked: false },
+                    { col: 1, row: 1, dir: 0, locked: false },
+                    { col: 2, row: 0, dir: 2, locked: false },
+                    { col: 2, row: 1, dir: 3, locked: false }
+                ]
+            },
+            {
+                name: "Brama Paproci (Wzór ze zdjęcia)",
+                hint: "Klasyczny układ dziewięciu obręczy z dwoma górnymi kołkami.",
+                rings: [
+                    { col: 0, row: 0, dir: 5, locked: true },
+                    { col: 1, row: 0, dir: 0, locked: false },
+                    { col: 2, row: 0, dir: 1, locked: true },
+                    { col: 0, row: 1, dir: 4, locked: false },
+                    { col: 1, row: 1, dir: 0, locked: false },
+                    { col: 2, row: 1, dir: 2, locked: false },
+                    { col: 0, row: 2, dir: 3, locked: false },
+                    { col: 1, row: 2, dir: 3, locked: false },
+                    { col: 2, row: 2, dir: 3, locked: false }
+                ]
+            },
+            {
+                name: "Serce Puszczy",
+                hint: "Centralny pierścień jest otoczony. Zacznij od zewnętrznych krawędzi.",
+                rings: [
+                    { col: 1, row: 0, dir: 0, locked: false },
+                    { col: 0, row: 0, dir: 4, locked: false },
+                    { col: 2, row: 0, dir: 2, locked: false },
+                    { col: 1, row: 1, dir: 0, locked: true },
+                    { col: 0, row: 1, dir: 3, locked: false },
+                    { col: 2, row: 1, dir: 3, locked: false },
+                    { col: 1, row: 2, dir: 3, locked: false }
+                ]
+            },
+            {
+                name: "Stare Korzenie",
+                hint: "Zwróć uwagę, które pierścienie mają kołki blokujące obrót.",
+                rings: [
+                    { col: 0, row: 0, dir: 0, locked: true },
+                    { col: 1, row: 0, dir: 3, locked: false },
+                    { col: 2, row: 0, dir: 0, locked: true },
+                    { col: 0, row: 1, dir: 5, locked: false },
+                    { col: 1, row: 1, dir: 1, locked: false },
+                    { col: 2, row: 1, dir: 2, locked: false },
+                    { col: 0, row: 2, dir: 4, locked: false },
+                    { col: 1, row: 2, dir: 0, locked: false },
+                    { col: 2, row: 2, dir: 3, locked: true }
+                ]
+            },
+            {
+                name: "Wielki Splot Druida",
+                hint: "Finałowe wyzwanie! Użyj podpowiedzi, jeśli utkniesz.",
+                rings: [
+                    { col: 0, row: 0, dir: 5, locked: true },
+                    { col: 1, row: 0, dir: 3, locked: false },
+                    { col: 2, row: 0, dir: 1, locked: true },
+                    { col: 0, row: 1, dir: 0, locked: false },
+                    { col: 1, row: 1, dir: 5, locked: false },
+                    { col: 2, row: 1, dir: 0, locked: false },
+                    { col: 0, row: 2, dir: 2, locked: false },
+                    { col: 1, row: 2, dir: 3, locked: true },
+                    { col: 2, row: 2, dir: 4, locked: false },
+                    { col: 1, row: 3, dir: 3, locked: false }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 3. PUZZLE LOGIC & BFS SOLVER
+        // ==========================================
+        /**
+         * Determines which rings are currently free to slide out.
+         * Rule: Two active adjacent rings A (at direction d from B) and B (at direction (d+3)%6 from A)
+         * are interlocked UNLESS:
+         *   A.dir === dirFromAToB  OR  B.dir === dirFromBToA
+         * A ring is FREE if it is not interlocked with ANY active neighbor!
+         */
+        function computeFreeRings(ringsState) {
+            const active = ringsState.filter(r => !r.removed);
+            const map = new Map();
+            active.forEach(r => map.set(`${r.col},${r.row}`, r));
+
+            const freeIds = [];
+            for (const ring of active) {
+                let blocked = false;
+                for (let d = 0; d < 6; d++) {
+                    const nbCoord = getNeighborCoords(ring.col, ring.row, d);
+                    const nb = map.get(`${nbCoord.col},${nbCoord.row}`);
+                    if (!nb) continue;
+
+                    const oppDir = (d + 3) % 6;
+                    // Interlocked unless ring's gap faces nb OR nb's gap faces ring
+                    const unhooked = (ring.dir === d) || (nb.dir === oppDir);
+                    if (!unhooked) {
+                        blocked = true;
+                        break;
+                    }
+                }
+                if (!blocked) {
+                    freeIds.push(ring.id);
+                }
+            }
+            return freeIds;
+        }
+
+        // Simulate cascading removals from a given state (for solver)
+        function simulateCascade(state) {
+            const cloned = state.map(r => ({ ...r }));
+            let changed = true;
+            while (changed) {
+                changed = false;
+                const freeIds = computeFreeRings(cloned);
+                if (freeIds.length > 0) {
+                    for (const id of freeIds) {
+                        const target = cloned.find(r => r.id === id);
+                        if (target) target.removed = true;
+                    }
+                    changed = true;
+                }
+            }
+            return cloned;
+        }
+
+        // Breadth-First Search Solver to find the exact next ring to click
+        function findHintRingId(currentRings) {
+            const startState = simulateCascade(currentRings.map(r => ({
+                id: r.id,
+                col: r.col,
+                row: r.row,
+                dir: r.dir,
+                locked: r.locked,
+                removed: r.removed
+            })));
+
+            if (startState.every(r => r.removed)) return null;
+
+            const encode = (st) => st.map(r => r.removed ? 'x' : r.dir).join('');
+            const queue = [{ state: startState, firstMoveId: null }];
+            const visited = new Set([encode(startState)]);
+
+            let iterations = 0;
+            const MAX_ITER = 18000;
+
+            while (queue.length > 0 && iterations < MAX_ITER) {
+                iterations++;
+                const { state, firstMoveId } = queue.shift();
+
+                for (let i = 0; i < state.length; i++) {
+                    const ring = state[i];
+                    if (ring.removed || ring.locked) continue;
+
+                    const nextState = state.map(r => ({ ...r }));
+                    nextState[i].dir = (nextState[i].dir + 1) % 6;
+                    const cascaded = simulateCascade(nextState);
+
+                    const moveId = firstMoveId !== null ? firstMoveId : ring.id;
+                    if (cascaded.every(r => r.removed)) {
+                        return moveId;
+                    }
+
+                    const key = encode(cascaded);
+                    if (!visited.has(key)) {
+                        visited.add(key);
+                        queue.push({ state: cascaded, firstMoveId: moveId });
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ==========================================
+        // 4. GAME STATE & RENDERING ENGINE
+        // ==========================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+
+        let currentLevelIdx = 0;
+        let completedLevels = new Set();
+        let moves = 0;
+        let rings = [];
+        let particles = [];
+        let fireflies = [];
+        let bgCanvas = null; // Offscreen cached forest background
+
+        let hoveredRingId = null;
+        let hintRingId = null;
+        let hintPulseTime = 0;
+        let cascadeTimer = 0;
+        let releaseCombo = 0;
+        let levelCompletedFlag = false;
+
+        // Layout metrics (recomputed on resize)
+        let ringRadius = 46;
+        let ringThickness = 13;
+        let colSpacing = 74;
+        let rowSpacing = 85;
+        let boardOffsetX = 0;
+        let boardOffsetY = 0;
+
+        // UI Elements
+        const levelIndicator = document.getElementById('levelIndicator');
+        const moveCounter = document.getElementById('moveCounter');
+        const hintBanner = document.getElementById('hintBanner');
+        const victoryModal = document.getElementById('victoryModal');
+        const victoryTitle = document.getElementById('victoryTitle');
+        const victoryText = document.getElementById('victoryText');
+        const levelsModal = document.getElementById('levelsModal');
+        const levelsGrid = document.getElementById('levelsGrid');
+
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('lesne_pierscienie_done');
+                if (saved) {
+                    JSON.parse(saved).forEach(idx => completedLevels.add(idx));
+                }
+            } catch (e) {}
+        }
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('lesne_pierscienie_done', JSON.stringify([...completedLevels]));
+            } catch (e) {}
+        }
+
+        // Generate lush procedural sunlit forest bokeh background (like the uploaded photo)
+        function buildForestBackground(w, h) {
+            const off = document.createElement('canvas');
+            off.width = w;
+            off.height = h;
+            const bctx = off.getContext('2d');
+
+            // 1. Deep canopy gradient
+            const baseGrad = bctx.createLinearGradient(0, 0, 0, h);
+            baseGrad.addColorStop(0, '#2a3a22');
+            baseGrad.addColorStop(0.35, '#3b4e2b');
+            baseGrad.addColorStop(0.75, '#27381c');
+            baseGrad.addColorStop(1, '#192611');
+            bctx.fillStyle = baseGrad;
+            bctx.fillRect(0, 0, w, h);
+
+            // 2. Soft sunlit clearing glow in upper center
+            const sunGlow = bctx.createRadialGradient(w * 0.52, h * 0.18, 10, w * 0.5, h * 0.35, Math.max(w, h) * 0.72);
+            sunGlow.addColorStop(0, 'rgba(248, 250, 218, 0.55)');
+            sunGlow.addColorStop(0.35, 'rgba(182, 204, 134, 0.25)');
+            sunGlow.addColorStop(1, 'rgba(30, 46, 22, 0)');
+            bctx.fillStyle = sunGlow;
+            bctx.fillRect(0, 0, w, h);
+
+            // 3. Out-of-focus vertical tree trunks in background
+            const trunks = [
+                { x: 0.08, w: 0.09, alpha: 0.45 },
+                { x: 0.22, w: 0.05, alpha: 0.30 },
+                { x: 0.36, w: 0.035, alpha: 0.18 },
+                { x: 0.68, w: 0.04, alpha: 0.20 },
+                { x: 0.81, w: 0.075, alpha: 0.35 },
+                { x: 0.94, w: 0.11, alpha: 0.48 }
+            ];
+            trunks.forEach(t => {
+                const tx = w * t.x;
+                const tw = w * t.w;
+                const tGrad = bctx.createLinearGradient(tx - tw, 0, tx + tw, 0);
+                tGrad.addColorStop(0, 'rgba(26, 32, 20, 0)');
+                tGrad.addColorStop(0.35, `rgba(28, 33, 21, ${t.alpha})`);
+                tGrad.addColorStop(0.65, `rgba(42, 46, 30, ${t.alpha * 0.9})`);
+                tGrad.addColorStop(1, 'rgba(26, 32, 20, 0)');
+                bctx.fillStyle = tGrad;
+                bctx.fillRect(tx - tw, 0, tw * 2, h);
+            });
+
+            // 4. Diagonal sunbeams
+            bctx.save();
+            bctx.globalCompositeOperation = 'screen';
+            for (let i = 0; i < 5; i++) {
+                const bx = w * (0.25 + i * 0.13);
+                const beamGrad = bctx.createLinearGradient(bx, 0, bx - w * 0.12, h * 0.85);
+                beamGrad.addColorStop(0, 'rgba(255, 250, 215, 0.13)');
+                beamGrad.addColorStop(1, 'rgba(255, 250, 215, 0)');
+                bctx.fillStyle = beamGrad;
+                bctx.beginPath();
+                bctx.moveTo(bx - 30, 0);
+                bctx.lineTo(bx + 45, 0);
+                bctx.lineTo(bx - w * 0.08 + 90, h * 0.85);
+                bctx.lineTo(bx - w * 0.08 - 60, h * 0.85);
+                bctx.closePath();
+                bctx.fill();
+            }
+            bctx.restore();
+
+            // 5. Creamy bokeh circles (sunlight filtering through leaves)
+            const bokehColors = [
+                'rgba(255, 252, 224, 0.22)',
+                'rgba(218, 235, 165, 0.18)',
+                'rgba(165, 198, 108, 0.16)',
+                'rgba(255, 245, 195, 0.26)'
+            ];
+            for (let i = 0; i < 42; i++) {
+                const bx = ((i * 73) % 100) / 100 * w;
+                const by = ((i * 41 + 13) % 85) / 100 * h;
+                const br = 14 + (i % 6) * 11;
+                const bGrad = bctx.createRadialGradient(bx, by, br * 0.1, bx, by, br);
+                const col = bokehColors[i % bokehColors.length];
+                bGrad.addColorStop(0, col);
+                bGrad.addColorStop(0.75, col);
+                bGrad.addColorStop(1, 'rgba(255,255,255,0)');
+                bctx.fillStyle = bGrad;
+                bctx.beginPath();
+                bctx.arc(bx, by, br, 0, Math.PI * 2);
+                bctx.fill();
+            }
+
+            // 6. Lush mossy forest floor at bottom
+            const mossGrad = bctx.createLinearGradient(0, h * 0.78, 0, h);
+            mossGrad.addColorStop(0, 'rgba(42, 62, 24, 0)');
+            mossGrad.addColorStop(0.45, 'rgba(48, 72, 26, 0.78)');
+            mossGrad.addColorStop(1, 'rgba(26, 42, 14, 0.96)');
+            bctx.fillStyle = mossGrad;
+            bctx.fillRect(0, h * 0.78, w, h * 0.22);
+
+            // Soft moss mounds
+            for (let i = 0; i < 14; i++) {
+                const mx = (i / 13) * w;
+                const my = h - 10 + Math.sin(i * 1.9) * 18;
+                const mr = 55 + (i % 4) * 24;
+                const mGrad = bctx.createRadialGradient(mx, my, 5, mx, my, mr);
+                mGrad.addColorStop(0, 'rgba(104, 138, 52, 0.45)');
+                mGrad.addColorStop(1, 'rgba(38, 58, 19, 0)');
+                bctx.fillStyle = mGrad;
+                bctx.beginPath();
+                bctx.arc(mx, my, mr, 0, Math.PI * 2);
+                bctx.fill();
+            }
+
+            return off;
+        }
+
+        function initFireflies() {
+            fireflies = [];
+            for (let i = 0; i < 24; i++) {
+                fireflies.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    r: 1.5 + Math.random() * 2.5,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -6 - Math.random() * 12,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function computeBoardLayout() {
+            if (!rings.length) return;
+
+            let minCol = Infinity, maxCol = -Infinity;
+            let minYUnit = Infinity, maxYUnit = -Infinity;
+
+            rings.forEach(r => {
+                const yUnit = r.row - (Math.abs(r.col % 2) === 1 ? 0.5 : 0);
+                if (r.col < minCol) minCol = r.col;
+                if (r.col > maxCol) maxCol = r.col;
+                if (yUnit < minYUnit) minYUnit = yUnit;
+                if (yUnit > maxYUnit) maxYUnit = yUnit;
+            });
+
+            const spanCols = Math.max(1, maxCol - minCol);
+            const spanRows = Math.max(1, maxYUnit - minYUnit);
+
+            const availW = Math.min(width * 0.84, 520);
+            const availH = height * 0.62;
+
+            // Interlocking geometry: adjacent rings overlap slightly so they physically hook through each other!
+            // Distance between adjacent centers = 1.62 * ringRadius
+            const maxRByW = availW / (spanCols * 1.42 + 2.4);
+            const maxRByH = availH / (spanRows * 1.64 + 2.6);
+
+            ringRadius = Math.max(30, Math.min(58, Math.min(maxRByW, maxRByH)));
+            ringThickness = Math.max(8, ringRadius * 0.27);
+            colSpacing = ringRadius * 1.42;
+            rowSpacing = ringRadius * 1.64;
+
+            const centerCol = (minCol + maxCol) / 2;
+            const centerYUnit = (minYUnit + maxYUnit) / 2;
+
+            boardOffsetX = width / 2 - centerCol * colSpacing;
+            boardOffsetY = height * 0.52 - centerYUnit * rowSpacing;
+
+            rings.forEach(r => {
+                const yUnit = r.row - (Math.abs(r.col % 2) === 1 ? 0.5 : 0);
+                r.targetX = boardOffsetX + r.col * colSpacing;
+                r.targetY = boardOffsetY + yUnit * rowSpacing;
+                if (!r.initialized) {
+                    r.x = r.targetX;
+                    r.y = r.targetY;
+                    r.initialized = true;
+                }
+            });
+        }
+
+        function resizeCanvas() {
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            bgCanvas = buildForestBackground(width, height);
+            if (fireflies.length === 0) initFireflies();
+            computeBoardLayout();
+        }
+
+        function loadLevel(idx) {
+            currentLevelIdx = idx;
+            const lvl = LEVELS[idx];
+            moves = 0;
+            releaseCombo = 0;
+            hintRingId = null;
+            levelCompletedFlag = false;
+
+            rings = lvl.rings.map((def, i) => ({
+                id: i,
+                col: def.col,
+                row: def.row,
+                dir: def.dir,
+                visualAngle: DIR_ANGLES[def.dir],
+                locked: !!def.locked,
+                removed: false,
+                removing: false,
+                removeProgress: 0,
+                removeDirX: 0,
+                removeDirY: -1,
+                shakeTimer: 0,
+                scale: 1,
+                x: 0,
+                y: 0,
+                targetX: 0,
+                targetY: 0,
+                initialized: false
+            }));
+
+            levelIndicator.textContent = `Poziom ${idx + 1} / ${LEVELS.length}`;
+            moveCounter.textContent = '0';
+            hintBanner.textContent = lvl.hint;
+            hintBanner.style.opacity = '1';
+
+            victoryModal.classList.remove('active');
+            computeBoardLayout();
+            renderLevelGrid();
+
+            // Check if any ring is already free at start
+            cascadeTimer = 0.25;
+        }
+
+        function spawnReleaseParticles(x, y, color = '#d8e89e') {
+            for (let i = 0; i < 18; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 35 + Math.random() * 95;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 25,
+                    size: 3 + Math.random() * 4.5,
+                    rot: Math.random() * Math.PI * 2,
+                    vRot: (Math.random() - 0.5) * 6,
+                    life: 1,
+                    decay: 0.9 + Math.random() * 0.6,
+                    color: i % 2 === 0 ? color : '#f2d388',
+                    isLeaf: i % 3 === 0
+                });
+            }
+        }
+
+        function triggerFreeRingsCheck() {
+            if (levelCompletedFlag) return;
+
+            const freeIds = computeFreeRings(rings.filter(r => !r.removing));
+            if (freeIds.length > 0) {
+                freeIds.forEach(id => {
+                    const ring = rings.find(r => r.id === id);
+                    if (ring && !ring.removed && !ring.removing) {
+                        ring.removing = true;
+                        ring.removed = true;
+                        // Slide outward away from board center or in direction of its gap
+                        const outAngle = DIR_ANGLES[ring.dir];
+                        ring.removeDirX = Math.cos(outAngle) * 0.5 + (ring.x - width / 2) * 0.004;
+                        ring.removeDirY = Math.sin(outAngle) * 0.5 - 0.65;
+
+                        sfx.playRelease(releaseCombo++);
+                        spawnReleaseParticles(ring.x, ring.y);
+
+                        if (hintRingId === ring.id) hintRingId = null;
+                    }
+                });
+
+                // Schedule another cascade check after a brief beat for satisfying chain reactions!
+                cascadeTimer = 0.28;
+            } else {
+                releaseCombo = 0;
+                // Check victory
+                if (rings.every(r => r.removed) && !levelCompletedFlag) {
+                    levelCompletedFlag = true;
+                    completedLevels.add(currentLevelIdx);
+                    saveProgress();
+                    renderLevelGrid();
+
+                    setTimeout(() => {
+                        sfx.playVictory();
+                        const isLast = currentLevelIdx === LEVELS.length - 1;
+                        victoryTitle.textContent = isLast ? "Mistrz Lasu!" : "Poziom Ukończony!";
+                        victoryText.textContent = isLast
+                            ? `Rozplątałeś wszystkie 8 układanek! Ostatni poziom zajął ${moves} ruchów.`
+                            : `Wszystkie drewniane pierścienie zostały uwolnione w ${moves} ${moves === 1 ? 'ruchu' : 'ruchach'}.`;
+                        document.getElementById('nextLevelBtn').textContent = isLast ? "Zagraj od początku" : "Następny poziom";
+                        victoryModal.classList.add('active');
+                    }, 520);
+                }
+            }
+        }
+
+        // ==========================================
+        // 5. DRAWING REALISTIC BAMBOO/WOOD C-RINGS
+        // ==========================================
+        function drawWoodenCRing(ring) {
+            if (ring.removed && !ring.removing) return;
+
+            ctx.save();
+
+            let alpha = 1;
+            let scale = ring.scale;
+            let drawX = ring.x;
+            let drawY = ring.y;
+
+            if (ring.removing) {
+                const t = ring.removeProgress;
+                const ease = t * t;
+                drawX += ring.removeDirX * ease * 190;
+                drawY += ring.removeDirY * ease * 190;
+                scale = 1 + t * 0.14;
+                alpha = Math.max(0, 1 - t * 1.15);
+            }
+
+            if (ring.shakeTimer > 0) {
+                drawX += Math.sin(ring.shakeTimer * 48) * 5 * ring.shakeTimer;
+            }
+
+            ctx.globalAlpha = alpha;
+            ctx.translate(drawX, drawY);
+            ctx.scale(scale, scale);
+
+            const R = ringRadius;
+            const T = ringThickness;
+            const gapHalfAngle = 0.66; // ~75 degree gap like the image
+            const startAngle = ring.visualAngle + gapHalfAngle;
+            const endAngle = ring.visualAngle + Math.PI * 2 - gapHalfAngle;
+
+            // Hint glow aura
+            if (hintRingId === ring.id && !ring.removing) {
+                const pulse = 0.5 + 0.5 * Math.sin(hintPulseTime * 5);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(0, 0, R, startAngle, endAngle);
+                ctx.lineWidth = T + 12 + pulse * 6;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = `rgba(230, 194, 122, ${0.28 + pulse * 0.32})`;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Hover highlight
+            if (hoveredRingId === ring.id && !ring.locked && !ring.removing) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(0, 0, R, startAngle, endAngle);
+                ctx.lineWidth = T + 7;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = 'rgba(255, 248, 210, 0.22)';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 1. Soft Drop Shadow onto forest depth
+            ctx.save();
+            ctx.translate(4, 9);
+            ctx.beginPath();
+            ctx.arc(0, 0, R, startAngle, endAngle);
+            ctx.lineWidth = T;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(10, 18, 8, 0.48)';
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Main Wood Body (Rich warm bamboo/teak wood shading)
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, R, startAngle, endAngle);
+            ctx.lineWidth = T;
+            ctx.lineCap = 'round';
+
+            const woodGrad = ctx.createLinearGradient(-R, -R, R, R);
+            woodGrad.addColorStop(0, '#c8965a');
+            woodGrad.addColorStop(0.35, '#9d6a36');
+            woodGrad.addColorStop(0.7, '#764920');
+            woodGrad.addColorStop(1, '#573314');
+            ctx.strokeStyle = woodGrad;
+            ctx.stroke();
+
+            // Inner bevel highlight along wood curve
+            ctx.beginPath();
+            ctx.arc(0, 0, R - T * 0.16, startAngle + 0.03, endAngle - 0.03);
+            ctx.lineWidth = T * 0.34;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(245, 206, 152, 0.38)';
+            ctx.stroke();
+
+            // Subtle dark wood grain fibers
+            ctx.beginPath();
+            ctx.arc(0, 0, R + T * 0.22, startAngle + 0.04, endAngle - 0.04);
+            ctx.lineWidth = 1.4;
+            ctx.strokeStyle = 'rgba(46, 24, 8, 0.45)';
+            ctx.stroke();
+            ctx.restore();
+
+            // 3. Cut wooden ends (rounded bamboo tips with growth rings)
+            [startAngle, endAngle].forEach(ang => {
+                const ex = Math.cos(ang) * R;
+                const ey = Math.sin(ang) * R;
+                ctx.save();
+                ctx.translate(ex, ey);
+                ctx.beginPath();
+                ctx.arc(0, 0, T * 0.47, 0, Math.PI * 2);
+                ctx.fillStyle = '#d7ab72';
+                ctx.fill();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#5c3615';
+                ctx.stroke();
+
+                // Tiny inner wood grain dot
+                ctx.beginPath();
+                ctx.arc(0, 0, T * 0.18, 0, Math.PI * 2);
+                ctx.fillStyle = '#8b5a2b';
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 4. Dark Olive-Green Vine Wraps (just like in the reference image!)
+            const wrapAngles = [
+                ring.visualAngle + Math.PI * 0.55,
+                ring.visualAngle + Math.PI,
+                ring.visualAngle + Math.PI * 1.45
+            ];
+            wrapAngles.forEach(wAng => {
+                const wx = Math.cos(wAng) * R;
+                const wy = Math.sin(wAng) * R;
+                ctx.save();
+                ctx.translate(wx, wy);
+                ctx.rotate(wAng + Math.PI / 2);
+
+                // Draw 3 diagonal wrapped vine strands
+                for (let s = -1; s <= 1; s++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-T * 0.54, s * 3.5 - 2);
+                    ctx.lineTo(T * 0.54, s * 3.5 + 2);
+                    ctx.lineWidth = 2.6;
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = s === 0 ? '#4d5d2b' : '#323f1a';
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            // 5. Top Anchor Wooden Peg (for locked rings, matching the top outer rings in the photo!)
+            if (ring.locked) {
+                ctx.save();
+                const pegY = -R - T * 0.72;
+                const pegW = T * 1.15;
+                const pegH = T * 0.85;
+
+                // Shadow
+                ctx.fillStyle = 'rgba(10, 18, 8, 0.45)';
+                ctx.beginPath();
+                ctx.roundRect(-pegW / 2 + 2, pegY - pegH / 2 + 3, pegW, pegH, 4);
+                ctx.fill();
+
+                // Wooden spool/peg block
+                const pegGrad = ctx.createLinearGradient(-pegW / 2, 0, pegW / 2, 0);
+                pegGrad.addColorStop(0, '#9d6a36');
+                pegGrad.addColorStop(0.5, '#c8965a');
+                pegGrad.addColorStop(1, '#6b411c');
+                ctx.fillStyle = pegGrad;
+                ctx.beginPath();
+                ctx.roundRect(-pegW / 2, pegY - pegH / 2, pegW, pegH, 4);
+                ctx.fill();
+                ctx.lineWidth = 1.4;
+                ctx.strokeStyle = '#47280d';
+                ctx.stroke();
+
+                // Vine binding around center of peg
+                ctx.fillStyle = '#38461e';
+                ctx.fillRect(-pegW * 0.24, pegY - pegH / 2, pegW * 0.48, pegH);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // Draw subtle interlocking connection dots/vines between still-active neighboring rings
+        function drawInterlockHints() {
+            const active = rings.filter(r => !r.removed && !r.removing);
+            const map = new Map();
+            active.forEach(r => map.set(`${r.col},${r.row}`, r));
+
+            for (const ring of active) {
+                for (let d = 0; d < 3; d++) { // Check half directions to avoid duplicate pairs
+                    const nbCoord = getNeighborCoords(ring.col, ring.row, d);
+                    const nb = map.get(`${nbCoord.col},${nbCoord.row}`);
+                    if (!nb) continue;
+
+                    const oppDir = (d + 3) % 6;
+                    const unhooked = (ring.dir === d) || (nb.dir === oppDir);
+                    const midX = (ring.x + nb.x) / 2;
+                    const midY = (ring.y + nb.y) / 2;
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(midX, midY, unhooked ? 4 : 3, 0, Math.PI * 2);
+                    ctx.fillStyle = unhooked
+                        ? 'rgba(166, 224, 98, 0.75)'
+                        : 'rgba(235, 130, 95, 0.45)';
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // ==========================================
+        // 6. MAIN ANIMATION LOOP
+        // ==========================================
+        let lastTime = 0;
+
+        function animate(timestamp) {
+            const dt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0.016);
+            lastTime = timestamp;
+            hintPulseTime += dt;
+
+            // Update cascade timer
+            if (cascadeTimer > 0) {
+                cascadeTimer -= dt;
+                if (cascadeTimer <= 0) {
+                    triggerFreeRingsCheck();
+                }
+            }
+
+            // Update rings smooth rotation & removal animations
+            rings.forEach(r => {
+                // Smooth position lerp
+                r.x += (r.targetX - r.x) * Math.min(1, dt * 14);
+                r.y += (r.targetY - r.y) * Math.min(1, dt * 14);
+
+                // Shortest angular interpolation
+                const targetAngle = DIR_ANGLES[r.dir];
+                let diff = targetAngle - r.visualAngle;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                r.visualAngle += diff * Math.min(1, dt * 18);
+
+                if (r.shakeTimer > 0) {
+                    r.shakeTimer = Math.max(0, r.shakeTimer - dt * 2.5);
+                }
+
+                if (r.removing) {
+                    r.removeProgress += dt * 1.9;
+                    if (r.removeProgress >= 1) {
+                        r.removing = false;
+                    }
+                }
+            });
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += 45 * dt; // gentle gravity
+                p.rot += p.vRot * dt;
+                p.life -= p.decay * dt;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Update ambient fireflies
+            fireflies.forEach(f => {
+                f.x += f.vx * dt;
+                f.y += f.vy * dt;
+                f.phase += dt * 2.2;
+                if (f.y < -10) { f.y = height + 10; f.x = Math.random() * width; }
+                if (f.x < -10) f.x = width + 10;
+                if (f.x > width + 10) f.x = -10;
+            });
+
+            // Render Frame
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Forest Backdrop
+            if (bgCanvas) {
+                ctx.drawImage(bgCanvas, 0, 0, width, height);
+            }
+
+            // 2. Ambient Drifting Forest Pollen / Fireflies
+            fireflies.forEach(f => {
+                const glow = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(f.phase));
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(245, 248, 195, ${glow})`;
+                ctx.fill();
+            });
+
+            // 3. Draw Rings (locked/back rings first, then active, then removing on top)
+            const sortedRings = [...rings].sort((a, b) => {
+                if (a.removing !== b.removing) return a.removing ? 1 : -1;
+                if (a.locked !== b.locked) return a.locked ? -1 : 1;
+                return a.y - b.y;
+            });
+
+            sortedRings.forEach(drawWoodenCRing);
+            drawInterlockHints();
+
+            // 4. Foreground Burst Particles
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.fillStyle = p.color;
+                if (p.isLeaf) {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, p.size * 1.4, p.size * 0.65, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // ==========================================
+        // 7. INPUT HANDLING (Mouse & Touch)
+        // ==========================================
+        function getRingAtPoint(px, py) {
+            // Check from top-most drawn ring backwards
+            const hitRadius = ringRadius + ringThickness * 0.85;
+            for (let i = rings.length - 1; i >= 0; i--) {
+                const r = rings[i];
+                if (r.removed || r.removing) continue;
+                const dx = px - r.x;
+                const dy = py - r.y;
+                if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+                    return r;
+                }
+            }
+            return null;
+        }
+
+        function handlePointerDown(clientX, clientY) {
+            if (levelCompletedFlag) return;
+            const rect = canvas.getBoundingClientRect();
+            const px = clientX - rect.left;
+            const py = clientY - rect.top;
+
+            const clickedRing = getRingAtPoint(px, py);
+            if (!clickedRing) return;
+
+            if (clickedRing.locked) {
+                clickedRing.shakeTimer = 1.0;
+                sfx.playLockedKnock();
+                hintBanner.textContent = "Ten pierścień jest przytwierdzony kołkiem! Obróć sąsiednie pierścienie.";
+                return;
+            }
+
+            // Rotate 60 degrees clockwise
+            clickedRing.dir = (clickedRing.dir + 1) % 6;
+            moves++;
+            moveCounter.textContent = String(moves);
+
+            if (hintRingId === clickedRing.id) {
+                hintRingId = null;
+            }
+
+            sfx.playWoodClick(0.95 + (clickedRing.dir % 3) * 0.08);
+            triggerFreeRingsCheck();
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handlePointerDown(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            const hovered = getRingAtPoint(px, py);
+            hoveredRingId = hovered ? hovered.id : null;
+            canvas.style.cursor = hovered ? (hovered.locked ? 'not-allowed' : 'pointer') : 'default';
+        });
+
+        // ==========================================
+        // 8. UI BUTTONS & MODALS
+        // ==========================================
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            sfx.playWoodClick(0.85);
+            loadLevel(currentLevelIdx);
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            sfx.playWoodClick(1.15);
+            const nextId = findHintRingId(rings);
+            if (nextId !== null) {
+                hintRingId = nextId;
+                hintBanner.textContent = "Podświetlony pierścień należy teraz obrócić!";
+            } else {
+                hintBanner.textContent = "Wszystkie pierścienie są już gotowe do uwolnienia!";
+            }
+        });
+
+        document.getElementById('soundBtn').addEventListener('click', () => {
+            sfx.enabled = !sfx.enabled;
+            document.getElementById('soundIconOn').style.display = sfx.enabled ? 'block' : 'none';
+            document.getElementById('soundIconOff').style.display = sfx.enabled ? 'none' : 'block';
+            document.getElementById('soundLabel').textContent = sfx.enabled ? 'Dźwięk' : 'Wyciszono';
+            if (sfx.enabled) sfx.playWoodClick(1.1);
+        });
+
+        document.getElementById('nextLevelBtn').addEventListener('click', () => {
+            sfx.playWoodClick(1.1);
+            const nextIdx = (currentLevelIdx + 1) % LEVELS.length;
+            loadLevel(nextIdx);
+        });
+
+        function renderLevelGrid() {
+            levelsGrid.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const tile = document.createElement('button');
+                tile.className = 'level-tile';
+                if (completedLevels.has(idx)) tile.classList.add('completed');
+                if (idx === currentLevelIdx) tile.classList.add('current');
+
+                tile.innerHTML = `<span>${idx + 1}</span><small>${completedLevels.has(idx) ? '✓' : `${lvl.rings.length} obr.`}</small>`;
+                tile.addEventListener('click', () => {
+                    sfx.playWoodClick(1.0);
+                    levelsModal.classList.remove('active');
+                    loadLevel(idx);
+                });
+                levelsGrid.appendChild(tile);
+            });
+        }
+
+        document.getElementById('openLevelsBtn').addEventListener('click', () => {
+            sfx.playWoodClick(1.05);
+            renderLevelGrid();
+            levelsModal.classList.add('active');
+        });
+
+        document.getElementById('closeLevelsBtn').addEventListener('click', () => {
+            sfx.playWoodClick(0.9);
+            levelsModal.classList.remove('active');
+        });
+
+        levelsModal.addEventListener('click', (e) => {
+            if (e.target === levelsModal) levelsModal.classList.remove('active');
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+
+        window.onload = function () {
+            loadProgress();
+            resizeCanvas();
+            loadLevel(0);
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
